@@ -1,0 +1,65 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── crowdData ──────────────────────────────────────────────
+    // Public-readable crowd density data (fan dashboards, gate alerts).
+    // Only authenticated staff can write (sensor ingestion, admin updates).
+    match /crowdData/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.token.role == 'staff';
+    }
+
+    // ── sustainabilityMetrics ─────────────────────────────────
+    // Public-readable waste/carbon metrics per zone.
+    // Staff-only writes.
+    match /sustainabilityMetrics/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.token.role == 'staff';
+    }
+
+    // ── transportLoad ─────────────────────────────────────────
+    // Public-readable shuttle/parking load data.
+    // Staff-only writes.
+    match /transportLoad/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.token.role == 'staff';
+    }
+
+    // ── incidents ─────────────────────────────────────────────
+    // Staff-only read/write (control room incident reports).
+    // No public access at all.
+    match /incidents/{doc} {
+      allow read, write: if request.auth != null
+                         && request.auth.token.role == 'staff';
+    }
+
+    // ── navigationQueries ─────────────────────────────────────
+    // Cached navigation answers — public read for fans.
+    // Any authenticated user can write (cache population).
+    match /navigationQueries/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── chatSessions ──────────────────────────────────────────
+    // Users can only read/write their own chat sessions.
+    match /chatSessions/{sessionId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.userId;
+    }
+
+    // ── operationsSummaries ───────────────────────────────────
+    // Staff-only access for daily briefings.
+    match /operationsSummaries/{doc} {
+      allow read, write: if request.auth != null
+                         && request.auth.token.role == 'staff';
+    }
+  }
+}
