@@ -23,6 +23,9 @@ export default function LoginPage({ language }: Props) {
     setIsLoading(true);
     setError(null);
     try {
+      if (email !== 'koushik4680@gmail.com') {
+        throw new Error('Unauthorized access: Staff email required.');
+      }
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/');
     } catch (err: any) {
@@ -37,7 +40,11 @@ export default function LoginPage({ language }: Props) {
     setError(null);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      if (result.user.email !== 'koushik4680@gmail.com') {
+        await auth.signOut();
+        throw new Error('Unauthorized access: Staff email required.');
+      }
       navigate('/');
     } catch (err: any) {
       setError(err.message || 'Google login failed.');
