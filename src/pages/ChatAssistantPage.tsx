@@ -27,6 +27,11 @@ export default function ChatAssistantPage({ language: uiLanguage }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Sync chat language when UI language changes from sidebar
+  useEffect(() => {
+    setChatLanguage(uiLanguage);
+  }, [uiLanguage]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -84,7 +89,7 @@ export default function ChatAssistantPage({ language: uiLanguage }: Props) {
     <div>
       <header className="page-header">
         <h1 className="page-title">{t('nav.chat', uiLanguage)}</h1>
-        <p className="page-subtitle">Multilingual AI assistant — auto-detects your language</p>
+        <p className="page-subtitle">{t('chat.subtitle', uiLanguage)}</p>
       </header>
 
       {/* Language Switcher */}

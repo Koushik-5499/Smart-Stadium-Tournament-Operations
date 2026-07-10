@@ -14,6 +14,7 @@ import type { SupportedLanguage, TranslationDict } from './types';
 
 const translations: Record<SupportedLanguage, TranslationDict> = {
   en: {
+    'chat.subtitle': 'Multilingual AI assistant — auto-detects your language',
     'app.title': 'Smart Stadium',
     'app.subtitle': 'FIFA World Cup 2026',
     'nav.home': 'Home',
@@ -62,6 +63,7 @@ const translations: Record<SupportedLanguage, TranslationDict> = {
     'error': 'An error occurred',
   },
   es: {
+    'chat.subtitle': 'Asistente de IA multilingüe — detecta su idioma automáticamente',
     'app.title': 'Estadio Inteligente',
     'app.subtitle': 'Copa del Mundo FIFA 2026',
     'nav.home': 'Inicio',
@@ -110,6 +112,7 @@ const translations: Record<SupportedLanguage, TranslationDict> = {
     'error': 'Ocurrió un error',
   },
   pt: {
+    'chat.subtitle': 'Assistente de IA multilíngue — detecta seu idioma automaticamente',
     'app.title': 'Estádio Inteligente',
     'app.subtitle': 'Copa do Mundo FIFA 2026',
     'nav.home': 'Início',
@@ -158,6 +161,7 @@ const translations: Record<SupportedLanguage, TranslationDict> = {
     'error': 'Ocorreu um erro',
   },
   fr: {
+    'chat.subtitle': 'Assistant IA multilingue — détecte automatiquement votre langue',
     'app.title': 'Stade Intelligent',
     'app.subtitle': 'Coupe du Monde FIFA 2026',
     'nav.home': 'Accueil',
@@ -206,6 +210,7 @@ const translations: Record<SupportedLanguage, TranslationDict> = {
     'error': 'Une erreur est survenue',
   },
   ar: {
+    'chat.subtitle': 'مساعد ذكاء اصطناعي متعدد اللغات — يكتشف لغتك تلقائيًا',
     'app.title': 'الملعب الذكي',
     'app.subtitle': 'كأس العالم FIFA 2026',
     'nav.home': 'الرئيسية',
@@ -254,6 +259,7 @@ const translations: Record<SupportedLanguage, TranslationDict> = {
     'error': 'حدث خطأ',
   },
   ta: {
+    'chat.subtitle': 'பன்மொழி AI உதவியாளர் — உங்கள் மொழியை தானாக கண்டறியும்',
     'app.title': 'ஸ்மார்ட் ஸ்டேடியம்',
     'app.subtitle': 'FIFA உலகக் கோப்பை 2026',
     'nav.home': 'வீடு',
@@ -266,6 +272,7 @@ const translations: Record<SupportedLanguage, TranslationDict> = {
     'language.select': 'மொழியைத் தேர்ந்தெடுக்கவும்',
   },
   hi: {
+    'chat.subtitle': 'बहुभाषी एआई सहायक — आपकी भाषा का स्वतः पता लगाता है',
     'app.title': 'स्मार्ट स्टेडियम',
     'app.subtitle': 'FIFA विश्व कप 2026',
     'nav.home': 'होम',
