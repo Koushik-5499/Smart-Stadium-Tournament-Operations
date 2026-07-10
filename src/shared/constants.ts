@@ -98,4 +98,6 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'pt' as const, name: 'Português', dir: 'ltr' as const },
   { code: 'fr' as const, name: 'Français', dir: 'ltr' as const },
   { code: 'ar' as const, name: 'العربية', dir: 'rtl' as const },
+  { code: 'ta' as const, name: 'தமிழ்', dir: 'ltr' as const },
+  { code: 'hi' as const, name: 'हिन्दी', dir: 'ltr' as const },
 ] as const;
