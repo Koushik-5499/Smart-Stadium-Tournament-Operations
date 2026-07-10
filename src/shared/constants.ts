@@ -9,6 +9,9 @@
 
 import type { StadiumLocation, NavigationEdge } from './types';
 
+/** Authorized staff email for login access. */
+export const STAFF_EMAIL = 'koushik4680@gmail.com';
+
 /** Stadium zone definitions with capacity data. */
 export const STADIUM_ZONES = [
   { id: 'north-stand', name: 'North Stand', capacity: 15000, gate: 'Gate A' },

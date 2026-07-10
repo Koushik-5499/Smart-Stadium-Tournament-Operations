@@ -4,6 +4,7 @@ import { auth } from '../shared/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { t } from '../shared/i18n';
 import type { SupportedLanguage } from '../shared/types';
+import { STAFF_EMAIL } from '../shared/constants';
 
 interface Props {
   language: SupportedLanguage;
@@ -23,7 +24,7 @@ export default function LoginPage({ language }: Props) {
     setIsLoading(true);
     setError(null);
     try {
-      if (email !== 'koushik4680@gmail.com') {
+      if (email !== STAFF_EMAIL) {
         throw new Error('Unauthorized access: Staff email required.');
       }
       await signInWithEmailAndPassword(auth, email, password);
@@ -41,7 +42,7 @@ export default function LoginPage({ language }: Props) {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      if (result.user.email !== 'koushik4680@gmail.com') {
+      if (result.user.email !== STAFF_EMAIL) {
         await auth.signOut();
         throw new Error('Unauthorized access: Staff email required.');
       }

@@ -1,3 +1,6 @@
+// PROBLEM STATEMENT ALIGNMENT: addresses "Dynamic Crowd Management" + "Multilingual Assistance" —
+// primary Volunteer Co-pilot dashboard combining XAI crowd alerts with translated fan instructions.
+
 /**
  * Volunteer Co-pilot Dashboard
  * 

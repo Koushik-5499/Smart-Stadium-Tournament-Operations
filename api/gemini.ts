@@ -7,16 +7,41 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
  * to the Google Gemini API using the server-side GEMINI_API_KEY env var.
  * The API key never reaches the client bundle.
  *
+ * Security: Server-side rate limiting (token bucket) prevents abuse.
+ *
  * Route: POST /api/gemini
  */
 
 const GEMINI_API_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
+/* ── Server-side rate limiter (token bucket) ────────────────────── */
+const RATE_LIMIT_MAX = 20;       // max burst
+const RATE_LIMIT_REFILL = 2;     // tokens per second
+let tokens = RATE_LIMIT_MAX;
+let lastRefill = Date.now();
+
+function tryConsumeToken(): boolean {
+  const now = Date.now();
+  const elapsed = (now - lastRefill) / 1000;
+  tokens = Math.min(RATE_LIMIT_MAX, tokens + elapsed * RATE_LIMIT_REFILL);
+  lastRefill = now;
+  if (tokens >= 1) {
+    tokens -= 1;
+    return true;
+  }
+  return false;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Server-side rate limiting
+  if (!tryConsumeToken()) {
+    return res.status(429).json({ error: 'Too many requests. Please try again shortly.' });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
