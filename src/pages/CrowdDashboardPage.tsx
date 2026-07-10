@@ -127,7 +127,7 @@ export default function CrowdDashboardPage({ language }: Props) {
           </div>
           {predictions.length === 0 ? (
             <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-size-sm)' }}>
-              Click "Predict" to generate AI congestion forecasts for the next 10-15 minutes.
+              Click &quot;Predict&quot; to generate AI congestion forecasts for the next 10-15 minutes.
             </p>
           ) : (
             predictions.map((pred, i) => (

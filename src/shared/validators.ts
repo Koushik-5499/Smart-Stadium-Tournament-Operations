@@ -17,7 +17,7 @@
 export function sanitizeInput(input: string): string {
   if (typeof input !== 'string') return '';
 
-  let clean = input
+  const clean = input
     // Remove HTML tags
     .replace(/<[^>]*>/g, '')
     // Remove script-like patterns

@@ -1,6 +1,7 @@
-import { callGemini } from '../../shared/geminiClient';
 import type { ZoneDensity } from '../../shared/types';
 import { getAlertLevel } from './crowdAnalysis';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '../../shared/firebaseConfig';
 
 /**
  * Structured JSON response expected from the Volunteer Copilot XAI.
@@ -20,51 +21,7 @@ export interface VolunteerAlert {
   };
 }
 
-const SYSTEM_PROMPT = `You are the "Volunteer Co-pilot" AI for a FIFA World Cup 2026 stadium.
-Your job is to assist a stadium volunteer who has no prior operational knowledge and faces language barriers.
-You will receive real-time crowd density data for a specific gate that has crossed the 80% capacity threshold.
-You must analyze the data and generate a structured JSON alert.
 
-CRITICAL REQUIREMENTS:
-1. Explainable AI (XAI): Provide a "reasoning" field explaining exactly WHY the alert fired based on the provided data. Explain the current count, capacity threshold, and rate of increase if available. Do not use generic text; explain the math/logic.
-2. Provide a clear "action" for the volunteer (e.g., "Redirect incoming fans to Gate X").
-3. Provide a "translatedInstruction" that the volunteer can show to a fan approaching the gate. Translate the instruction into the requested target language.
-
-You MUST respond ONLY with a valid JSON array of alert objects, matching this structure:
-[
-  {
-    "zoneId": "...",
-    "gate": "...",
-    "reasoning": "...",
-    "action": "...",
-    "severity": "high" | "critical",
-    "translatedInstruction": {
-      "language": "es",
-      "text": "..."
-    }
-  }
-]
-
-FEW-SHOT EXAMPLES:
-Input:
-Target Language: es
-Data: {"zoneId":"north-stand","gate":"Gate 7","currentCount":840,"capacity":1000,"occupancyRate":0.84,"trend":"+12% in 3 mins"}
-
-Output:
-[
-  {
-    "zoneId": "north-stand",
-    "gate": "Gate 7",
-    "reasoning": "Gate 7 is at 84% capacity (840/1000) and density increased 12% in the last 3 minutes. Action is required before it reaches critical levels.",
-    "action": "Redirect incoming fans to Gate 8 which has lower occupancy.",
-    "severity": "high",
-    "translatedInstruction": {
-      "language": "es",
-      "text": "La Puerta 7 está llena. Por favor, diríjase a la Puerta 8 para entrar al estadio más rápido."
-    }
-  }
-]
-`;
 
 /**
  * Analyzes congested zones and generates a Volunteer Alert using Gemini XAI.
@@ -81,26 +38,14 @@ export async function generateVolunteerAlerts(
 
   // Provide trend data if possible, for this simple implementation we just provide the live data.
   // In a real app we'd calculate trend using the sliding window from crowdAnalysis.ts.
-  const dataStr = JSON.stringify({
-    targetLanguage,
-    data: congestedZones.map(z => ({
-      zoneId: z.zoneId,
-      gate: z.gate,
-      currentCount: z.currentCount,
-      capacity: z.capacity,
-      occupancyRate: z.occupancyRate
-    }))
-  });
-
-  // Ensure unique cache key based on data and language
-  const cacheKey = `volunteer-alert-${targetLanguage}-${congestedZones.map(z => z.zoneId + Math.round(z.occupancyRate * 100)).join('-')}`;
-
+    const functions = getFunctions(app);
+    const generateAlerts = httpsCallable(functions, 'generateVolunteerAlerts');
+    
   try {
-    const response = await callGemini(SYSTEM_PROMPT, dataStr, cacheKey);
-    const jsonStr = response.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(jsonStr);
+    const result = await generateAlerts({ congestedZones, targetLanguage });
+    const parsed = result.data as any[];
 
-    return (Array.isArray(parsed) ? parsed : [parsed]).map((p: any) => ({
+    return parsed.map((p: any) => ({
       zoneId: String(p.zoneId ?? ''),
       gate: String(p.gate ?? ''),
       reasoning: String(p.reasoning ?? 'Alert triggered due to high density.'),

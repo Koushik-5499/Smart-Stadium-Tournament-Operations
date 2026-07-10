@@ -45,13 +45,13 @@ Comprehensive unit tests (`crowdAnalysis.test.ts`) have been added to verify ext
 - **Simultaneous Alerts**: Handling multiple gates alarming simultaneously.
 - **Malformed Input**: Resilience against unsupported language requests (e.g., requesting 'Klingon').
 
-## 5. Google Services Integration
+## 5. Google Cloud Platform Services Used
 
-This project actively leverages several Google services:
-- **Google Maps JavaScript API**: Used to render a visual map of the stadium layout directly in the Volunteer Co-pilot dashboard.
-- **Firebase Authentication**: Secures access for staff and volunteers.
-- **Firebase Firestore**: Stores operational rules, metadata, and simulated state with real-time listeners.
-- **Google Gemini API**: Powers the XAI alerts and natural language translations.
+This project actively leverages several legitimate Google services for its core functionality:
+- **Firebase Authentication** (`src/pages/LoginPage.tsx`, `src/App.tsx`): Secures access for staff and volunteers via Identity Platform.
+- **Firebase Firestore** (`src/shared/firebase.ts`, `src/modules/crowd-management/CrowdSimulator.ts`): Stores operational rules, metadata, and simulated state with real-time listeners.
+- **Firebase Cloud Functions** (`functions/src/index.ts`, `src/modules/crowd-management/volunteerCopilot.ts`): Secure, serverless execution environment hosting the Gemini XAI logic (`generateVolunteerAlerts`). The client calls this via HTTPS callable.
+- **Leaflet + OpenStreetMap**: Used to render a visual map of the stadium layout directly in the Volunteer Co-pilot dashboard. Mapping is powered by Leaflet + OpenStreetMap (free, no billing account required).
 
 ## 6. Test with Your Own Data (CSV Upload)
 

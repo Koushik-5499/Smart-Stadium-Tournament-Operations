@@ -136,7 +136,7 @@ export default function HomePage(_props: Props) {
         {/* Right Column: Live Data & Map */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <StadiumMapEmbed />
+            <StadiumMapEmbed liveData={liveData} alerts={alerts} />
           </div>
 
           <div className="card">
