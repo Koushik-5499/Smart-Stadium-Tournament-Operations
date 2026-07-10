@@ -140,7 +140,7 @@ export interface OperationsSummary {
  * ────────────────────────────────────────────────────────────────── */
 
 /** Supported UI languages. */
-export type SupportedLanguage = 'en' | 'es' | 'pt' | 'fr' | 'ar';
+export type SupportedLanguage = 'en' | 'es' | 'pt' | 'fr' | 'ar' | 'ta' | 'hi';
 
 /** Translation dictionary for a single language. */
 export type TranslationDict = Record<string, string>;

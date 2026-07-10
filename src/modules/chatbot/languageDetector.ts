@@ -14,13 +14,13 @@ import { callGemini } from '../../shared/geminiClient';
 import type { SupportedLanguage } from '../../shared/types';
 
 const DETECTION_SYSTEM_PROMPT = `Detect the language of the user's message.
-Respond ONLY with the ISO 639-1 language code: en, es, pt, fr, or ar.
+Respond ONLY with the ISO 639-1 language code: en, es, pt, fr, ar, ta, or hi.
 If unsure, respond with "en".`;
 
 const CHAT_SYSTEM_PROMPT = `You are a helpful multilingual assistant at FIFA World Cup 2026 stadium.
 You help fans with navigation, finding facilities, event information, and general questions.
 IMPORTANT: Respond in the SAME LANGUAGE as the user's message.
-If the user writes in Spanish, respond in Spanish. Same for Portuguese, French, and Arabic.
+If the user writes in Spanish, respond in Spanish. Same for Portuguese, French, Arabic, Tamil, and Hindi.
 Be friendly, concise, and helpful. Keep responses under 100 words.`;
 
 /**
@@ -33,7 +33,7 @@ export async function detectLanguage(text: string): Promise<SupportedLanguage> {
   try {
     const response = await callGemini(DETECTION_SYSTEM_PROMPT, text, `lang-detect-${text.slice(0, 30)}`);
     const code = response.trim().toLowerCase().slice(0, 2);
-    const validCodes: SupportedLanguage[] = ['en', 'es', 'pt', 'fr', 'ar'];
+    const validCodes: SupportedLanguage[] = ['en', 'es', 'pt', 'fr', 'ar', 'ta', 'hi'];
     return validCodes.includes(code as SupportedLanguage) ? (code as SupportedLanguage) : 'en';
   } catch {
     return 'en';
@@ -64,6 +64,8 @@ export async function generateChatResponse(
       pt: 'Desculpe, estou com problemas. Tente novamente.',
       fr: 'Désolé, j\'ai des difficultés. Veuillez réessayer.',
       ar: 'عذراً، أواجه مشكلة الآن. يرجى المحاولة مرة أخرى.',
+      ta: 'மன்னிக்கவும், எனக்கு இப்போது சிக்கல் உள்ளது. மீண்டும் முயற்சிக்கவும்.',
+      hi: 'क्षमा करें, मुझे अभी समस्या हो रही है। कृपया पुनः प्रयास करें।',
     };
     return fallbacks[language];
   }
@@ -82,6 +84,8 @@ function getLanguageName(code: SupportedLanguage): string {
     pt: 'Portuguese',
     fr: 'French',
     ar: 'Arabic',
+    ta: 'Tamil',
+    hi: 'Hindi',
   };
   return names[code];
 }

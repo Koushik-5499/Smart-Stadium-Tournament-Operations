@@ -253,6 +253,8 @@ const translations: Record<SupportedLanguage, TranslationDict> = {
     'loading': 'جارٍ التحميل...',
     'error': 'حدث خطأ',
   },
+  ta: {},
+  hi: {},
 };
 
 /**
