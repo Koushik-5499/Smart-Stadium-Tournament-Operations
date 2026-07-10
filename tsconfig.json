@@ -26,5 +26,5 @@
       "@components/*": ["src/components/*"]
     }
   },
-  "include": ["src", "scripts"]
+  "include": ["src", "scripts", "api"]
 }

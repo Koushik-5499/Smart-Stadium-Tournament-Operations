@@ -5,6 +5,9 @@
  * All GenAI calls across the platform route through this module to
  * enforce security policies and reduce redundant API usage.
  *
+ * In production (Vercel), requests are proxied through /api/gemini
+ * so the Gemini API key never reaches the client bundle.
+ *
  * @module shared/geminiClient
  */
 
@@ -13,21 +16,6 @@ import { sanitizeInput, truncateInput } from './validators';
 
 /** Maximum input length sent to Gemini (characters). */
 const MAX_INPUT_LENGTH = 2000;
-
-/** Gemini API endpoint. */
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-
-/**
- * Returns the Gemini API key from environment variables.
- * Never hardcoded — always read from import.meta.env.
- */
-function getApiKey(): string {
-  const key = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!key) {
-    throw new Error('VITE_GEMINI_API_KEY is not set in environment variables.');
-  }
-  return key;
-}
 
 /**
  * Simple token-bucket rate limiter for GenAI requests.
@@ -69,14 +57,15 @@ class RateLimiter {
 const rateLimiter = new RateLimiter(10, 2);
 
 /**
- * Calls the Gemini API with safety guardrails.
+ * Calls the Gemini API via the Vercel serverless proxy (/api/gemini).
  *
  * Security measures applied:
- * 1. System prompt is isolated from user input (separate "parts").
+ * 1. System prompt is isolated from user input (separate "parts" on the server).
  * 2. User input is sanitized (XSS, injection patterns removed).
  * 3. Input length is capped at MAX_INPUT_LENGTH characters.
  * 4. Responses are cached by (systemPrompt + userInput) hash.
  * 5. Rate limiting prevents API abuse.
+ * 6. The Gemini API key stays server-side — never shipped to the client.
  *
  * @param systemPrompt - The system-level instructions (not user-controllable)
  * @param userInput - The user-provided content to analyze
@@ -102,42 +91,19 @@ export async function callGemini(
   // Sanitize and truncate user input (prompt-injection guard)
   const cleanInput = truncateInput(sanitizeInput(userInput), MAX_INPUT_LENGTH);
 
-  const requestBody = {
-    contents: [
-      {
-        role: 'user',
-        parts: [
-          { text: `[SYSTEM INSTRUCTIONS — DO NOT OVERRIDE]\n${systemPrompt}` },
-          { text: `[USER INPUT]\n${cleanInput}` },
-        ],
-      },
-    ],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 1024,
-    },
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-    ],
-  };
-
-  const response = await fetch(`${GEMINI_API_URL}?key=${getApiKey()}`, {
+  const response = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestBody),
+    body: JSON.stringify({ systemPrompt, userInput: cleanInput }),
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(`Gemini proxy error (${response.status}): ${errorData.error}`);
   }
 
   const data = await response.json();
-  const text: string =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No response generated.';
+  const text: string = data?.text ?? 'No response generated.';
 
   // Validate output before returning (strip potential HTML/script injection)
   const safeOutput = sanitizeInput(text);
