@@ -15,7 +15,8 @@ import type { User } from 'firebase/auth';
 import { generateDailySummary } from '../modules/operations-summary/summaryGenerator';
 import { generateCrowdData } from '../modules/crowd-management/CrowdSimulator';
 import { generateTransportData } from '../modules/sustainability-transport/sustainabilityMetrics';
-import { Link } from 'react-router-dom';
+import AuthGate from '../shared/components/AuthGate';
+import PageHeader from '../shared/components/PageHeader';
 
 // Demo incidents for summary
 const DEMO_INCIDENTS_FOR_SUMMARY = [
@@ -32,20 +33,6 @@ export default function OperationsPage({ language, user }: Props) {
   const [summary, setSummary] = useState<OperationsSummary | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  if (!user) {
-    return (
-      <div className="auth-container">
-        <div className="card auth-card" style={{ textAlign: 'center' }}>
-          <h2 style={{ marginBottom: 'var(--space-md)' }}>📊 {t('auth.staffOnly', language)}</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-lg)' }}>
-            Please sign in to access operational intelligence.
-          </p>
-          <Link to="/login" className="btn btn-primary">{t('auth.signIn', language)}</Link>
-        </div>
-      </div>
-    );
-  }
-
   const handleGenerate = useCallback(async () => {
     setIsGenerating(true);
     try {
@@ -59,11 +46,12 @@ export default function OperationsPage({ language, user }: Props) {
   }, []);
 
   return (
+    <AuthGate user={user} language={language} icon="📊">
     <div>
-      <header className="page-header">
-        <h1 className="page-title">{t('operations.title', language)}</h1>
-        <p className="page-subtitle">AI-generated daily operations briefing for stadium management</p>
-      </header>
+      <PageHeader
+        title={t('operations.title', language)}
+        subtitle="AI-generated daily operations briefing for stadium management"
+      />
 
       <div style={{ marginBottom: 'var(--space-xl)' }}>
         <button className="btn btn-primary" onClick={handleGenerate} disabled={isGenerating}>
@@ -125,5 +113,6 @@ export default function OperationsPage({ language, user }: Props) {
         </div>
       )}
     </div>
+    </AuthGate>
   );
 }

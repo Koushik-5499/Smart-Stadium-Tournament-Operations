@@ -4,7 +4,6 @@ import { auth } from '../shared/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { t } from '../shared/i18n';
 import type { SupportedLanguage } from '../shared/types';
-import { STAFF_EMAIL } from '../shared/constants';
 
 interface Props {
   language: SupportedLanguage;
@@ -24,13 +23,11 @@ export default function LoginPage({ language }: Props) {
     setIsLoading(true);
     setError(null);
     try {
-      if (email !== STAFF_EMAIL) {
-        throw new Error('Unauthorized access: Staff email required.');
-      }
       await signInWithEmailAndPassword(auth, email, password);
-      navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      navigate('/dashboard');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -41,14 +38,11 @@ export default function LoginPage({ language }: Props) {
     setError(null);
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      if (result.user.email !== STAFF_EMAIL) {
-        await auth.signOut();
-        throw new Error('Unauthorized access: Staff email required.');
-      }
-      navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Google login failed.');
+      await signInWithPopup(auth, provider);
+      navigate('/dashboard');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || 'Google login failed.');
     } finally {
       setIsLoading(false);
     }
@@ -78,6 +72,7 @@ export default function LoginPage({ language }: Props) {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
+              maxLength={254}
             />
           </div>
           <div className="form-group">
@@ -90,6 +85,7 @@ export default function LoginPage({ language }: Props) {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
+              maxLength={128}
             />
           </div>
           <button

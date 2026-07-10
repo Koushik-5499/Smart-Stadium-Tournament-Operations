@@ -8,46 +8,27 @@
  * pathfinding, and turn-by-turn directions.
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
 import { t } from '../shared/i18n';
-import type { SupportedLanguage, ChatMessage } from '../shared/types';
+import type { SupportedLanguage } from '../shared/types';
 import { parseNavigationIntent } from '../modules/navigation/intentParser';
 import { findRoute, resolveLocation, getAllLocations } from '../modules/navigation/stadiumMap';
 import { callGemini } from '../shared/geminiClient';
+import { useChatMessages } from '../shared/hooks/useChatMessages';
+import ChatInterface from '../shared/components/ChatInterface';
 
 interface Props {
   language: SupportedLanguage;
 }
 
 export default function NavigationChatPage({ language }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: '1', role: 'assistant', content: t('chat.welcome', language), timestamp: Date.now() },
-  ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { messages, input, setInput, isLoading, handleSend } = useChatMessages({
+    id: '1', role: 'assistant', content: t('chat.welcome', language), timestamp: Date.now()
+  });
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const handleSend = useCallback(async () => {
-    const trimmed = input.trim();
-    if (!trimmed || isLoading) return;
-
-    const userMsg: ChatMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: trimmed,
-      timestamp: Date.now(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput('');
-    setIsLoading(true);
-
-    try {
-      const intent = await parseNavigationIntent(trimmed);
-      let responseText = '';
+  const onSend = () => {
+    handleSend(async (text) => {
+      const intent = await parseNavigationIntent(text);
+      let responseText: string;
 
       if (intent.type === 'navigation' && intent.to) {
         const fromId = intent.from ?? 'lobby-main';
@@ -81,26 +62,13 @@ export default function NavigationChatPage({ language }: Props) {
         responseText = await callGemini(
           'You are a helpful stadium assistant at FIFA World Cup 2026. Answer questions concisely. Available locations: ' +
             getAllLocations().map((l) => l.name).join(', '),
-          trimmed,
+          text,
         );
       }
 
-      const assistantMsg: ChatMessage = {
-        id: `asst-${Date.now()}`,
-        role: 'assistant',
-        content: responseText,
-        timestamp: Date.now(),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { id: `err-${Date.now()}`, role: 'assistant', content: 'Sorry, something went wrong. Please try again.', timestamp: Date.now() },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [input, isLoading]);
+      return { content: responseText };
+    });
+  };
 
   return (
     <div>
@@ -109,55 +77,16 @@ export default function NavigationChatPage({ language }: Props) {
         <p className="page-subtitle">Ask for directions to gates, seats, restrooms, food courts, or medical stations</p>
       </header>
 
-      <div className="chat-container" role="log" aria-label="Navigation chat">
-        <div className="chat-messages" aria-live="polite">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`chat-message ${msg.role}`}
-              role={msg.role === 'assistant' ? 'status' : undefined}
-            >
-              {msg.content.split('\n').map((line, i) => (
-                <span key={i}>
-                  {line}
-                  {i < msg.content.split('\n').length - 1 && <br />}
-                </span>
-              ))}
-            </div>
-          ))}
-          {isLoading && (
-            <div className="chat-message assistant">
-              <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        <div className="chat-input-area">
-          <label htmlFor="nav-chat-input" className="sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
-            {t('chat.placeholder', language)}
-          </label>
-          <input
-            id="nav-chat-input"
-            type="text"
-            className="form-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={t('chat.placeholder', language)}
-            disabled={isLoading}
-            aria-label="Type your navigation question"
-          />
-          <button
-            className="btn btn-primary"
-            onClick={handleSend}
-            disabled={isLoading || !input.trim()}
-            aria-label={t('chat.send', language)}
-          >
-            {t('chat.send', language)}
-          </button>
-        </div>
-      </div>
+      <ChatInterface
+        messages={messages}
+        input={input}
+        isLoading={isLoading}
+        onInputChange={setInput}
+        onSend={onSend}
+        placeholder={t('chat.placeholder', language)}
+        sendLabel={t('chat.send', language)}
+        ariaLabel="Navigation chat"
+      />
     </div>
   );
 }

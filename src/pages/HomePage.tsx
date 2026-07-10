@@ -9,62 +9,21 @@
  * instructions to show to fans.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import type { SupportedLanguage, ZoneDensity } from '../shared/types';
-import { generateCrowdData } from '../modules/crowd-management/CrowdSimulator';
 import { getAlertLevel, formatOccupancy } from '../modules/crowd-management/crowdAnalysis';
-import { generateVolunteerAlerts, type VolunteerAlert } from '../modules/crowd-management/volunteerCopilot';
 import CsvUploader from '../shared/components/CsvUploader';
 import StadiumMapEmbed from '../shared/components/StadiumMapEmbed';
-import { SUPPORTED_LANGUAGES, DENSITY_THRESHOLDS, SEVERITY_COLORS } from '../shared/constants';
+import { useCrowdData } from '../shared/hooks/useCrowdData';
+import { useVolunteerAlerts } from '../shared/hooks/useVolunteerAlerts';
+import { SUPPORTED_LANGUAGES, SEVERITY_COLORS } from '../shared/constants';
+import type { SupportedLanguage } from '../shared/types';
 
 interface Props {
   language: SupportedLanguage;
 }
 
 export default function HomePage(_props: Props) {
-  const [liveData, setLiveData] = useState<ZoneDensity[]>([]);
-  const [customData, setCustomData] = useState<ZoneDensity[]>([]);
-  const [alerts, setAlerts] = useState<VolunteerAlert[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  
-  // The language the volunteer wants to translate instructions INTO (for the fan)
-  const [fanLanguage, setFanLanguage] = useState<string>('es');
-
-  // Determine active data source (Custom CSV overrides live feed)
-  const activeData = customData.length > 0 ? customData : liveData;
-
-  // Poll live data if no custom data is active
-  useEffect(() => {
-    if (customData.length > 0) return;
-    
-    const update = () => setLiveData(generateCrowdData());
-    update();
-    const interval = setInterval(update, 5000);
-    return () => clearInterval(interval);
-  }, [customData]);
-
-  // Trigger XAI Analysis when data changes and gates cross 80%
-  const analyzeCongestion = useCallback(async (data: ZoneDensity[], targetLang: string) => {
-    const congested = data.filter(z => z.occupancyRate >= DENSITY_THRESHOLDS.high); // >= 0.8
-    if (congested.length === 0) {
-      setAlerts([]);
-      return;
-    }
-
-    setIsAnalyzing(true);
-    try {
-      const newAlerts = await generateVolunteerAlerts(congested, targetLang);
-      setAlerts(newAlerts);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }, []);
-
-  // Run analysis when data or target language changes
-  useEffect(() => {
-    analyzeCongestion(activeData, fanLanguage);
-  }, [activeData, fanLanguage, analyzeCongestion]);
+  const { liveData, customData, setCustomData, activeData } = useCrowdData();
+  const { alerts, isAnalyzing, fanLanguage, setFanLanguage } = useVolunteerAlerts(activeData);
 
   return (
     <div>

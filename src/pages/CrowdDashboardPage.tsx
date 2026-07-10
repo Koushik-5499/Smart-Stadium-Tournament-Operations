@@ -8,30 +8,24 @@
  * and fan-facing gate avoidance alerts. Data refreshes every 5 seconds.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { t } from '../shared/i18n';
-import type { SupportedLanguage, ZoneDensity, CrowdPrediction } from '../shared/types';
-import { generateCrowdData } from '../modules/crowd-management/CrowdSimulator';
-import { getAlertLevel, getCongestedZones, formatOccupancy, generateRerouteSuggestion } from '../modules/crowd-management/crowdAnalysis';
+import type { SupportedLanguage, CrowdPrediction } from '../shared/types';
+import { getCongestedZones, formatOccupancy, generateRerouteSuggestion } from '../modules/crowd-management/crowdAnalysis';
 import { predictCongestion } from '../modules/crowd-management/crowdPrediction';
-import { SEVERITY_COLORS } from '../shared/constants';
+import { useCrowdData } from '../shared/hooks/useCrowdData';
+import PageHeader from '../shared/components/PageHeader';
+import StatCard from '../shared/components/StatCard';
+import DensityBar from '../shared/components/DensityBar';
 
 interface Props {
   language: SupportedLanguage;
 }
 
 export default function CrowdDashboardPage({ language }: Props) {
-  const [crowdData, setCrowdData] = useState<ZoneDensity[]>([]);
+  const { activeData: crowdData } = useCrowdData();
   const [predictions, setPredictions] = useState<CrowdPrediction[]>([]);
   const [isLoadingPrediction, setIsLoadingPrediction] = useState(false);
-
-  // Refresh crowd data every 5 seconds
-  useEffect(() => {
-    const update = () => setCrowdData(generateCrowdData());
-    update();
-    const interval = setInterval(update, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   const handlePredict = useCallback(async () => {
     if (crowdData.length === 0) return;
@@ -48,10 +42,10 @@ export default function CrowdDashboardPage({ language }: Props) {
 
   return (
     <div>
-      <header className="page-header">
-        <h1 className="page-title">{t('crowd.title', language)}</h1>
-        <p className="page-subtitle">Real-time crowd density monitoring with AI congestion prediction</p>
-      </header>
+      <PageHeader
+        title={t('crowd.title', language)}
+        subtitle="Real-time crowd density monitoring with AI congestion prediction"
+      />
 
       {/* Fan-facing alert banners */}
       {congested.map((zone) => (
@@ -64,30 +58,18 @@ export default function CrowdDashboardPage({ language }: Props) {
         </div>
       ))}
 
-      {/* Stats row */}
       <div className="grid grid-4" style={{ marginBottom: 'var(--space-xl)' }}>
-        <div className="stat-card">
-          <div className="stat-label">Total Visitors</div>
-          <div className="stat-value">{crowdData.reduce((s, z) => s + z.currentCount, 0).toLocaleString()}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Average Occupancy</div>
-          <div className="stat-value">
-            {crowdData.length > 0
-              ? formatOccupancy(crowdData.reduce((s, z) => s + z.occupancyRate, 0) / crowdData.length)
-              : '—'}
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Congested Zones</div>
-          <div className="stat-value" style={{ color: congested.length > 0 ? 'var(--accent-danger)' : 'var(--accent-success)' }}>
-            {congested.length}
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Active Zones</div>
-          <div className="stat-value">{crowdData.length}</div>
-        </div>
+        <StatCard label="Total Visitors" value={crowdData.reduce((s, z) => s + z.currentCount, 0).toLocaleString()} />
+        <StatCard
+          label="Average Occupancy"
+          value={crowdData.length > 0 ? formatOccupancy(crowdData.reduce((s, z) => s + z.occupancyRate, 0) / crowdData.length) : '—'}
+        />
+        <StatCard
+          label="Congested Zones"
+          value={congested.length}
+          color={congested.length > 0 ? 'var(--accent-danger)' : 'var(--accent-success)'}
+        />
+        <StatCard label="Active Zones" value={crowdData.length} />
       </div>
 
       <div className="grid grid-2">
@@ -99,22 +81,13 @@ export default function CrowdDashboardPage({ language }: Props) {
               Live
             </span>
           </div>
-          {crowdData.map((zone) => {
-            const level = getAlertLevel(zone.occupancyRate);
-            return (
-              <div key={zone.zoneId} className="density-bar-container">
-                <div className="density-bar-header">
-                  <span>{zone.zoneName}</span>
-                  <span style={{ color: SEVERITY_COLORS[level === 'critical' ? 5 : level === 'high' ? 4 : level === 'medium' ? 3 : 1] }}>
-                    {formatOccupancy(zone.occupancyRate)}
-                  </span>
-                </div>
-                <div className="density-bar" role="progressbar" aria-valuenow={Math.round(zone.occupancyRate * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={`${zone.zoneName} occupancy`}>
-                  <div className={`density-bar-fill ${level}`} style={{ width: `${zone.occupancyRate * 100}%` }} />
-                </div>
-              </div>
-            );
-          })}
+          {crowdData.map((zone) => (
+              <DensityBar
+                key={zone.zoneId}
+                label={zone.zoneName}
+                occupancyRate={zone.occupancyRate}
+              />
+          ))}
         </div>
 
         {/* AI Predictions */}

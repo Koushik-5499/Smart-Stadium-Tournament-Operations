@@ -7,7 +7,7 @@ Security and Trust are paramount for a platform supporting a mega-event like the
 We use Firestore as the primary real-time database. Access is strictly controlled via Firestore Security Rules located in `firestore.rules`.
 
 ### Principles Implemented:
-- **Default Deny:** All collections deny read/write by default.
+- **Default Deny:** All collections deny read/write by default. A catch-all rule `match /{document=**} { allow read, write: if false; }` ensures any unlisted collection is automatically denied.
 - **Role-Based Access Control (RBAC):** Access to sensitive operational data (like incident reports) is restricted to users with the `staff` custom claim.
 - **Data Validation:** Rules validate incoming data shapes and types (e.g., ensuring `severity` is an integer between 1 and 5).
 - **Public vs. Private:** Certain data (like public zones or general schedules) is readable by all, but only writable by staff.
@@ -44,6 +44,12 @@ To prevent abuse or denial-of-wallet attacks via the Gemini API, a client-side r
 
 ### Defense 4: Caching
 Identical queries are cached (TTL-based) to reduce API load and prevent redundant LLM processing for common questions (e.g., "Where is the nearest restroom?"). (See `src/shared/cache.ts`).
+
+### Defense 5: CSV Upload Validation
+User-uploaded CSV data is validated before processing to prevent injection of malformed data (NaN, negative values, zero-capacity zones). The `CsvUploader` component (See `src/shared/components/CsvUploader.tsx`) validates every numeric field and rejects rows with invalid data.
+
+### Defense 6: Login Form Constraints
+Login form inputs enforce `maxLength` (254 for email, 128 for password) and `required` attributes to prevent abuse and ensure valid input shapes at the HTML level, in addition to Firebase Authentication's server-side validation.
 
 ## 4. XSS and Data Sanitization
 

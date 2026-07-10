@@ -61,5 +61,13 @@ service cloud.firestore {
       allow read, write: if request.auth != null
                          && request.auth.token.role == 'staff';
     }
+
+    // ── DEFAULT DENY (catch-all) ──────────────────────────────
+    // Any collection not explicitly listed above is denied.
+    // This prevents accidental data exposure if new collections
+    // are created without corresponding rules.
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }

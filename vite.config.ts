@@ -9,6 +9,10 @@ export default defineConfig({
   },
   build: {
     sourcemap: true,
-
   },
+  test: {
+    coverage: {
+      reporter: ['text', 'json', 'html']
+    }
+  }
 });

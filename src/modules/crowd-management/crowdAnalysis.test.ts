@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAlertLevel, getCongestedZones, getZoneDataFast, isRisingTrend } from './crowdAnalysis';
+import { getAlertLevel, getCongestedZones, getZoneDataFast, isRisingTrend, formatOccupancy, generateRerouteSuggestion } from './crowdAnalysis';
 import { generateVolunteerAlerts } from './volunteerCopilot';
 import * as geminiClient from '../../shared/geminiClient';
 import type { ZoneDensity } from '../../shared/types';
@@ -67,6 +67,38 @@ describe('crowdAnalysis.ts', () => {
     it('handles missing/short data safely', () => {
       expect(isRisingTrend([0.5, 0.6])).toBe(false);
       expect(isRisingTrend([])).toBe(false);
+    });
+  });
+
+  describe('formatOccupancy', () => {
+    it('formats numbers to percentage strings', () => {
+      expect(formatOccupancy(0.85)).toBe('85%');
+      expect(formatOccupancy(0)).toBe('0%');
+      expect(formatOccupancy(1)).toBe('100%');
+      expect(formatOccupancy(1.5)).toBe('150%'); // Overcapacity
+    });
+  });
+
+  describe('generateRerouteSuggestion', () => {
+    it('returns a fallback when all other zones are congested', async () => {
+      const congested = { zoneId: 'z1', gate: 'Gate A', occupancyRate: 0.9, zoneName: 'Zone 1' } as ZoneDensity;
+      const allZones = [
+        congested,
+        { zoneId: 'z2', gate: 'Gate B', occupancyRate: 0.95, zoneName: 'Zone 2' } as ZoneDensity,
+      ];
+      const result = generateRerouteSuggestion(congested, allZones);
+      expect(result).toBe('All zones near capacity. Consider delaying entry at Gate A.');
+    });
+
+    it('suggests the least congested zone', () => {
+      const congested = { zoneId: 'z1', gate: 'Gate A', occupancyRate: 0.9, zoneName: 'Zone 1' } as ZoneDensity;
+      const allZones = [
+        congested,
+        { zoneId: 'z2', gate: 'Gate B', occupancyRate: 0.8, zoneName: 'Zone 2' } as ZoneDensity,
+        { zoneId: 'z3', gate: 'Gate C', occupancyRate: 0.6, zoneName: 'Zone 3' } as ZoneDensity, // least congested
+      ];
+      const result = generateRerouteSuggestion(congested, allZones);
+      expect(result).toBe('Redirect from Gate A to Gate C (Zone 3) — currently at 60% capacity.');
     });
   });
 });

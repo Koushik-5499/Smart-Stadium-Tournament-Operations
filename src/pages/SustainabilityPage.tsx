@@ -8,72 +8,39 @@
  * AI-generated reduction tips, and transport load with AI routing.
  */
 
-import { useState, useEffect, useCallback } from 'react';
 import { t } from '../shared/i18n';
-import type { SupportedLanguage, SustainabilityData, TransportRoute } from '../shared/types';
-import { generateSustainabilityData, generateTransportData } from '../modules/sustainability-transport/sustainabilityMetrics';
-import { getSustainabilityInsights, getTransportRecommendations } from '../modules/sustainability-transport/transportOptimizer';
+import type { SupportedLanguage } from '../shared/types';
+import { useSustainability } from '../shared/hooks/useSustainability';
 import { calculateRecyclingRate, formatCarbon } from '../modules/sustainability-transport/carbonCalculator';
+import PageHeader from '../shared/components/PageHeader';
+import StatCard from '../shared/components/StatCard';
 
 interface Props {
   language: SupportedLanguage;
 }
 
 export default function SustainabilityPage({ language }: Props) {
-  const [susData, setSusData] = useState<SustainabilityData[]>([]);
-  const [transportData, setTransportData] = useState<TransportRoute[]>([]);
-  const [insights, setInsights] = useState<{ tips: string[]; grade: string; highlight: string } | null>(null);
-  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
-
-  useEffect(() => {
-    setSusData(generateSustainabilityData());
-    setTransportData(generateTransportData());
-  }, []);
-
-  const handleGetInsights = useCallback(async () => {
-    setIsLoadingInsights(true);
-    try {
-      const [susInsights, transportRecs] = await Promise.all([
-        getSustainabilityInsights(susData),
-        getTransportRecommendations(transportData),
-      ]);
-      setInsights(susInsights);
-      setTransportData(transportRecs);
-    } finally {
-      setIsLoadingInsights(false);
-    }
-  }, [susData, transportData]);
-
-  const totalWaste = susData.reduce((s, d) => s + d.wasteKg, 0);
-  const totalRecycled = susData.reduce((s, d) => s + d.recycledKg, 0);
-  const totalCarbon = susData.reduce((s, d) => s + d.carbonKg, 0);
-  const totalEnergy = susData.reduce((s, d) => s + d.energyKwh, 0);
+  const { 
+    susData, 
+    transportData, 
+    insights, 
+    isLoadingInsights, 
+    handleGetInsights, 
+    totals 
+  } = useSustainability();
 
   return (
     <div>
-      <header className="page-header">
-        <h1 className="page-title">{t('sustainability.title', language)} & {t('transport.title', language)}</h1>
-        <p className="page-subtitle">Environmental metrics and AI-powered transportation intelligence</p>
-      </header>
+      <PageHeader
+        title={`${t('sustainability.title', language)} & ${t('transport.title', language)}`}
+        subtitle="Environmental metrics and AI-powered transportation intelligence"
+      />
 
-      {/* Stats */}
       <div className="grid grid-4" style={{ marginBottom: 'var(--space-xl)' }}>
-        <div className="stat-card">
-          <div className="stat-label">{t('sustainability.waste', language)}</div>
-          <div className="stat-value">{totalWaste.toLocaleString()} kg</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Recycling Rate</div>
-          <div className="stat-value" style={{ color: 'var(--accent-success)' }}>{calculateRecyclingRate(totalWaste, totalRecycled)}%</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">{t('sustainability.carbon', language)}</div>
-          <div className="stat-value">{formatCarbon(totalCarbon)}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Energy Usage</div>
-          <div className="stat-value">{totalEnergy.toLocaleString()} kWh</div>
-        </div>
+        <StatCard label={t('sustainability.waste', language)} value={`${totals.waste.toLocaleString()} kg`} />
+        <StatCard label="Recycling Rate" value={`${calculateRecyclingRate(totals.waste, totals.recycled)}%`} color="var(--accent-success)" />
+        <StatCard label={t('sustainability.carbon', language)} value={formatCarbon(totals.carbon)} />
+        <StatCard label="Energy Usage" value={`${totals.energy.toLocaleString()} kWh`} />
       </div>
 
       <div className="grid grid-2">
@@ -94,8 +61,8 @@ export default function SustainabilityPage({ language }: Props) {
                   <div
                     className="chart-bar"
                     style={{
-                      height: `${Math.min(100, (d.carbonKg / (totalCarbon / susData.length)) * 50)}px`,
-                      background: `linear-gradient(to top, var(--accent-success), ${d.carbonKg > totalCarbon / susData.length ? 'var(--accent-warning)' : 'var(--accent-secondary)'})`,
+                      height: `${Math.min(100, (d.carbonKg / (totals.carbon / susData.length)) * 50)}px`,
+                      background: `linear-gradient(to top, var(--accent-success), ${d.carbonKg > totals.carbon / susData.length ? 'var(--accent-warning)' : 'var(--accent-secondary)'})`,
                     }}
                     role="img"
                     aria-label={`${d.zoneName}: ${d.carbonKg} kg CO2`}

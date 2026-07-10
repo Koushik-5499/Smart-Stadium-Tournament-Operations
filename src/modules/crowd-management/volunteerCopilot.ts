@@ -81,7 +81,7 @@ export async function generateVolunteerAlerts(
 
   const dataStr = JSON.stringify({
     targetLanguage,
-    data: congestedZones.map((z: any) => ({
+    data: congestedZones.map((z: ZoneDensity) => ({
       zoneId: z.zoneId,
       gate: z.gate,
       currentCount: z.currentCount,
@@ -95,7 +95,7 @@ export async function generateVolunteerAlerts(
     const jsonStr = responseText.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(jsonStr);
 
-    return (Array.isArray(parsed) ? parsed : [parsed]).map((p: any) => ({
+    return (Array.isArray(parsed) ? parsed : [parsed]).map((p: Partial<VolunteerAlert>) => ({
       zoneId: String(p.zoneId ?? ''),
       gate: String(p.gate ?? ''),
       reasoning: String(p.reasoning ?? 'Alert triggered due to high density.'),

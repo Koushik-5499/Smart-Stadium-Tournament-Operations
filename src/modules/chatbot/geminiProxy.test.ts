@@ -7,13 +7,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 /* ── Replicated handler logic for testability ─────────────────── */
 
 const GEMINI_API_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
-async function handler(req: any, res: any) {
+async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -57,8 +58,8 @@ async function handler(req: any, res: any) {
       data?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No response generated.';
 
     return res.status(200).json({ text });
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message ?? 'Internal server error' });
+  } catch (err: unknown) {
+    return res.status(500).json({ error: err instanceof Error ? err.message : 'Internal server error' });
   }
 }
 
@@ -77,16 +78,16 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-function mockReq(overrides: Record<string, any> = {}) {
+function mockReq(overrides: Partial<VercelRequest> = {}): VercelRequest {
   return {
     method: 'POST',
     body: { systemPrompt: 'Test prompt', userInput: 'Test input' },
     ...overrides,
-  };
+  } as VercelRequest;
 }
 
-function mockRes() {
-  const res: any = {};
+function mockRes(): VercelResponse {
+  const res = {} as VercelResponse;
   res.status = vi.fn().mockReturnValue(res);
   res.json = vi.fn().mockReturnValue(res);
   return res;

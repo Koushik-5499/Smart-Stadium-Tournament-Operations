@@ -82,7 +82,9 @@ export function countBySeverity(
   const counts: Record<SeverityLevel, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
   for (const incident of incidents) {
-    counts[incident.severity] = (counts[incident.severity] ?? 0) + 1;
+    if (incident.status !== 'resolved') {
+      counts[incident.severity] = (counts[incident.severity] ?? 0) + 1;
+    }
   }
 
   return counts;
@@ -95,5 +97,5 @@ export function countBySeverity(
  * @returns true if a critical open incident exists
  */
 export function hasCriticalIncident(incidents: Incident[]): boolean {
-  return incidents.some((i) => i.severity === 5 && i.status === 'open');
+  return incidents.some((i) => i.severity === 5 && i.status !== 'resolved');
 }

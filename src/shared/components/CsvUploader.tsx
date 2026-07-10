@@ -28,12 +28,21 @@ export default function CsvUploader({ onDataLoaded }: Props) {
           if (!headers.includes(req)) throw new Error(`Missing required header: ${req}`);
         }
 
-        const parsedData: ZoneDensity[] = lines.slice(1).map(line => {
+        const parsedData: ZoneDensity[] = lines.slice(1).map((line, rowIdx) => {
           const values = line.split(',').map(v => v.trim());
           const getVal = (col: string) => values[headers.indexOf(col)];
           
           const capacity = Number(getVal('capacity'));
           const currentCount = Number(getVal('currentcount'));
+
+          // Validate numeric fields to prevent NaN / negative / zero-capacity issues
+          if (isNaN(capacity) || capacity <= 0) {
+            throw new Error(`Row ${rowIdx + 2}: capacity must be a positive number (got "${getVal('capacity')}").`);
+          }
+          if (isNaN(currentCount) || currentCount < 0) {
+            throw new Error(`Row ${rowIdx + 2}: currentCount must be a non-negative number (got "${getVal('currentcount')}").`);
+          }
+
           const occupancyRate = Math.min(1.0, currentCount / capacity);
           
           return {
@@ -49,8 +58,9 @@ export default function CsvUploader({ onDataLoaded }: Props) {
 
         onDataLoaded(parsedData);
         setError(null);
-      } catch (err: any) {
-        setError(err.message || 'Failed to parse CSV');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        setError(message || 'Failed to parse CSV');
       }
     };
     reader.onerror = () => setError('Failed to read file');
@@ -92,7 +102,7 @@ export default function CsvUploader({ onDataLoaded }: Props) {
           Resume Live Feed
         </button>
       </div>
-      {error && <div style={{ color: 'var(--accent-danger)', fontSize: 'var(--font-size-sm)', marginTop: 'var(--space-sm)' }}>{error}</div>}
+      {error && <div role="alert" style={{ color: 'var(--accent-danger)', fontSize: 'var(--font-size-sm)', marginTop: 'var(--space-sm)' }}>{error}</div>}
     </div>
   );
 }

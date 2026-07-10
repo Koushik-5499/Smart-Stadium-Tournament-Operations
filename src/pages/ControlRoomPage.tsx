@@ -8,92 +8,46 @@
  * summarization, severity ranking, and action recommendations.
  */
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { t } from '../shared/i18n';
-import type { SupportedLanguage, Incident, SeverityLevel } from '../shared/types';
+import type { SupportedLanguage } from '../shared/types';
 import type { User } from 'firebase/auth';
-import { rankIncidents, countBySeverity, hasCriticalIncident } from '../modules/control-room/incidentPrioritizer';
-import { analyzeIncident } from '../modules/control-room/incidentAnalyzer';
 import { SEVERITY_LABELS, SEVERITY_COLORS } from '../shared/constants';
-import { sanitizeInput } from '../shared/validators';
-import { Link } from 'react-router-dom';
+import { useIncidents } from '../shared/hooks/useIncidents';
+import AuthGate from '../shared/components/AuthGate';
+import PageHeader from '../shared/components/PageHeader';
+import StatCard from '../shared/components/StatCard';
 
 interface Props {
   language: SupportedLanguage;
   user: User | null;
 }
 
-// Sample incidents for demo
-const DEMO_INCIDENTS: Incident[] = [
-  { id: '1', title: 'Medical emergency near Gate A', description: 'Fan collapsed near gate entrance, paramedics called.', location: 'Gate A', reportedAt: Date.now() - 300000, severity: 4, status: 'in-progress', aiSummary: 'Medical emergency: fan collapse at Gate A', aiRecommendation: 'Dispatch medical team and clear surrounding area', reportedBy: 'Security Officer' },
-  { id: '2', title: 'Overcrowding at South Concourse', description: 'South concourse congestion increasing rapidly, fans unable to move freely.', location: 'South Concourse', reportedAt: Date.now() - 600000, severity: 3, status: 'open', aiSummary: 'Crowd congestion at South Concourse', aiRecommendation: 'Open secondary gates and redirect flow via North route', reportedBy: 'Crowd Monitor' },
-  { id: '3', title: 'Broken escalator Level 2', description: 'Escalator to Level 2 east wing has stopped working.', location: 'East Wing', reportedAt: Date.now() - 1200000, severity: 2, status: 'open', aiSummary: 'Escalator malfunction in East Wing', aiRecommendation: 'Post signage directing to elevators and stairs', reportedBy: 'Maintenance' },
-  { id: '4', title: 'Suspicious package near Exit B', description: 'Unattended bag found near emergency exit B.', location: 'Exit B', reportedAt: Date.now() - 60000, severity: 5, status: 'open', aiSummary: 'Security alert: unattended bag at Exit B', aiRecommendation: 'Evacuate 50m radius, notify bomb squad, alert security', reportedBy: 'Security Patrol' },
-];
-
 export default function ControlRoomPage({ language, user }: Props) {
-  const [incidents, setIncidents] = useState<Incident[]>(DEMO_INCIDENTS);
+  const { ranked, counts, isCritical, isAnalyzing, submitIncident } = useIncidents(user);
+  
   const [showForm, setShowForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newLocation, setNewLocation] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Auth gate
-  if (!user) {
-    return (
-      <div className="auth-container">
-        <div className="card auth-card" style={{ textAlign: 'center' }}>
-          <h2 style={{ marginBottom: 'var(--space-md)' }}>🛡️ {t('auth.staffOnly', language)}</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-lg)' }}>
-            Please sign in with your staff credentials to access the Control Room.
-          </p>
-          <Link to="/login" className="btn btn-primary">{t('auth.signIn', language)}</Link>
-        </div>
-      </div>
-    );
-  }
-
-  const ranked = rankIncidents(incidents);
-  const counts = countBySeverity(incidents);
-  const isCritical = hasCriticalIncident(incidents);
-
-  const handleSubmit = useCallback(async () => {
-    if (!newTitle.trim() || !newDescription.trim()) return;
-    setIsAnalyzing(true);
-
-    try {
-      const analysis = await analyzeIncident(sanitizeInput(newDescription));
-
-      const newIncident: Incident = {
-        id: `inc-${Date.now()}`,
-        title: sanitizeInput(newTitle),
-        description: sanitizeInput(newDescription),
-        location: sanitizeInput(newLocation) || 'Unknown',
-        reportedAt: Date.now(),
-        severity: analysis.suggestedSeverity as SeverityLevel,
-        status: 'open',
-        aiSummary: analysis.summary,
-        aiRecommendation: analysis.recommendation,
-        reportedBy: user.email ?? 'Staff',
-      };
-
-      setIncidents((prev) => [newIncident, ...prev]);
+  const handleSubmit = async () => {
+    const success = await submitIncident(newTitle, newDescription, newLocation);
+    if (success) {
       setNewTitle('');
       setNewDescription('');
       setNewLocation('');
       setShowForm(false);
-    } finally {
-      setIsAnalyzing(false);
     }
-  }, [newTitle, newDescription, newLocation, user.email]);
+  };
 
   return (
+    <AuthGate user={user} language={language} icon="🛡️">
     <div>
-      <header className="page-header">
-        <h1 className="page-title">{t('nav.controlRoom', language)}</h1>
-        <p className="page-subtitle">AI-powered incident management and real-time decision support</p>
-      </header>
+      <PageHeader
+        title={t('nav.controlRoom', language)}
+        subtitle="AI-powered incident management and real-time decision support"
+      />
 
       {isCritical && (
         <div className="alert-banner danger" role="alert" aria-live="assertive">
@@ -101,13 +55,9 @@ export default function ControlRoomPage({ language, user }: Props) {
         </div>
       )}
 
-      {/* Stats */}
       <div className="grid grid-4" style={{ marginBottom: 'var(--space-xl)' }}>
         {([5, 4, 3, 2] as const).map((sev) => (
-          <div key={sev} className="stat-card">
-            <div className="stat-label">{SEVERITY_LABELS[sev]}</div>
-            <div className="stat-value" style={{ color: SEVERITY_COLORS[sev] }}>{counts[sev]}</div>
-          </div>
+          <StatCard key={sev} label={SEVERITY_LABELS[sev]} value={counts[sev]} color={SEVERITY_COLORS[sev]} />
         ))}
       </div>
 
@@ -170,5 +120,6 @@ export default function ControlRoomPage({ language, user }: Props) {
         )}
       </div>
     </div>
+    </AuthGate>
   );
 }

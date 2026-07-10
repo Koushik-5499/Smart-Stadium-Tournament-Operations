@@ -7,8 +7,8 @@
 
 import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
-import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from './shared/firebaseConfig';
+import { useAuth } from './shared/hooks/useAuth';
 import { t, getTextDirection } from './shared/i18n';
 import type { SupportedLanguage } from './shared/types';
 import { SUPPORTED_LANGUAGES } from './shared/constants';
@@ -35,15 +35,9 @@ function LoadingFallback() {
 
 export default function App() {
   const [language, setLanguage] = useState<SupportedLanguage>('en');
-  const [user, setUser] = useState<User | null>(null);
+  const user = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-
-  // Listen to auth state changes
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => setUser(u));
-    return unsub;
-  }, []);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
