@@ -253,8 +253,30 @@ const translations: Record<SupportedLanguage, TranslationDict> = {
     'loading': 'جارٍ التحميل...',
     'error': 'حدث خطأ',
   },
-  ta: {},
-  hi: {},
+  ta: {
+    'app.title': 'ஸ்மார்ட் ஸ்டேடியம்',
+    'app.subtitle': 'FIFA உலகக் கோப்பை 2026',
+    'nav.home': 'வீடு',
+    'nav.chat': 'அரட்டை உதவியாளர்',
+    'nav.login': 'உள்நுழைய',
+    'nav.logout': 'வெளியேறு',
+    'chat.placeholder': 'உங்கள் செய்தியை தட்டச்சு செய்யவும்...',
+    'chat.send': 'அனுப்பு',
+    'chat.welcome': 'வரவேற்கிறோம்! நான் உங்களுக்கு எப்படி உதவ முடியும்? நான் வழிசெலுத்தல் மற்றும் தகவல்களுக்கு உதவ முடியும்.',
+    'language.select': 'மொழியைத் தேர்ந்தெடுக்கவும்',
+  },
+  hi: {
+    'app.title': 'स्मार्ट स्टेडियम',
+    'app.subtitle': 'FIFA विश्व कप 2026',
+    'nav.home': 'होम',
+    'nav.chat': 'चैट सहायक',
+    'nav.login': 'लॉग इन करें',
+    'nav.logout': 'लॉग आउट',
+    'chat.placeholder': 'अपना संदेश टाइप करें...',
+    'chat.send': 'भेजें',
+    'chat.welcome': 'स्वागत है! मैं आपकी कैसे मदद कर सकता हूँ? मैं नेविगेशन और स्टेडियम की जानकारी में मदद कर सकता हूँ।',
+    'language.select': 'भाषा चुनें',
+  },
 };
 
 /**
