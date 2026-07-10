@@ -1,0 +1,5 @@
+zoneId,zoneName,currentCount,capacity,gate
+north-stand,North Stand,950,1000,Gate 7
+south-stand,South Stand,200,1000,Gate 2
+east-wing,East Wing,150,800,Gate 3
+west-wing,West Wing,810,900,Gate 8

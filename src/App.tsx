@@ -81,9 +81,16 @@ export default function App() {
 
         <div className="sidebar-nav">
           <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <span className="nav-link-icon" aria-hidden="true">🏠</span>
-            {t('nav.home', language)}
+            <span className="nav-link-icon" aria-hidden="true">🎯</span>
+            Volunteer Co-pilot
           </NavLink>
+
+          <div style={{ marginTop: 'var(--space-md)', padding: '0 var(--space-lg)', marginBottom: 'var(--space-xs)' }}>
+            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Supporting Context
+            </span>
+          </div>
+
           <NavLink to="/crowd" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <span className="nav-link-icon" aria-hidden="true">👥</span>
             {t('nav.crowd', language)}
