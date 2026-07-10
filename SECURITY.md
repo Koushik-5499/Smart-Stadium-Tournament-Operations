@@ -24,8 +24,9 @@ match /incidents/{incidentId} {
 
 The Gemini API key and Firebase configuration details are never hardcoded in the source code.
 
-- **Environment Variables:** All secrets are stored in `.env.local` which is excluded from version control via `.gitignore`.
-- **Build Process:** Vite injects these variables securely at build time.
+- **Vercel Serverless Proxy:** The frontend never communicates with the Gemini API directly. Instead, it sends a request to our Vercel Serverless Function (`/api/gemini`).
+- **Server-Side Secrets:** The Gemini API key (`GEMINI_API_KEY`) is stored securely as a Vercel environment variable on the server. It is never prefixed with `VITE_` and never bundled into the client code.
+- **Environment Variables:** Firebase config variables are stored in `.env.local` which is excluded from version control via `.gitignore`.
 
 ## 3. Generative AI Safety & Prompt Injection Prevention
 
@@ -63,6 +64,7 @@ Incident reports generated in the Control Room Copilot may contain sensitive inf
 
 We regularly audit dependencies for known vulnerabilities using `npm audit`.
 
-## 8. CI/CD Security (Firebase Hosting)
+## 8. CI/CD Security (Vercel)
 
-Deployments to Firebase Hosting are secured via GitHub Actions (if configured) or direct CLI, utilizing short-lived access tokens or service accounts, ensuring the production environment cannot be compromised easily.
+Deployments to Vercel are secured via GitHub integration. Vercel automatically builds and deploys the `main` branch, ensuring a secure pipeline from code commit to production deployment.
+

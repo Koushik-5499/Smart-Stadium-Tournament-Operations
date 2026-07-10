@@ -50,7 +50,7 @@ Comprehensive unit tests (`crowdAnalysis.test.ts`) have been added to verify ext
 This project actively leverages several legitimate Google services for its core functionality:
 - **Firebase Authentication** (`src/pages/LoginPage.tsx`, `src/App.tsx`): Secures access for staff and volunteers via Identity Platform.
 - **Firebase Firestore** (`src/shared/firebase.ts`, `src/modules/crowd-management/CrowdSimulator.ts`): Stores operational rules, metadata, and simulated state with real-time listeners.
-- **Firebase Cloud Functions** (`functions/src/index.ts`, `src/modules/crowd-management/volunteerCopilot.ts`): Secure, serverless execution environment hosting the Gemini XAI logic (`generateVolunteerAlerts`). The client calls this via HTTPS callable.
+- **Vercel Hosting & Serverless** (`api/gemini.ts`): The frontend application and the backend AI proxy route are both hosted on Vercel. The serverless function acts as a secure proxy to the Gemini API, ensuring the `GEMINI_API_KEY` is never exposed to the client.
 - **Leaflet + OpenStreetMap**: Used to render a visual map of the stadium layout directly in the Volunteer Co-pilot dashboard. Mapping is powered by Leaflet + OpenStreetMap (free, no billing account required).
 
 ## 6. Test with Your Own Data (CSV Upload)
@@ -69,14 +69,25 @@ Judges can upload their own CSV data to test the Volunteer Co-pilot's XAI pipeli
    npm install --legacy-peer-deps
    ```
 3. **Configure Environment:**
-   Create a `.env.local` file in the root directory:
+   Create a `.env.local` file in the root directory (do not commit this):
    ```env
-   VITE_GEMINI_API_KEY=your_gemini_api_key_here
+   # Firebase Config
+   VITE_FIREBASE_API_KEY=your_firebase_api_key
+   # ... other Firebase vars
    ```
+   *Note: For local development of the Gemini API, you can either run the Vercel dev server (`npx vercel dev`) or temporarily add `VITE_GEMINI_API_KEY` if testing the client directly without the proxy.*
+
 4. **Start Development Server:**
    ```bash
    npm run dev
    ```
+
+## 8. Deployment (Vercel)
+
+The application is configured to deploy seamlessly to Vercel:
+1. Install Vercel CLI: `npm install -g vercel`
+2. Run `vercel` to deploy the frontend and the `/api` serverless proxy.
+3. In the Vercel Dashboard, set the `GEMINI_API_KEY` environment variable.
 
 ## 8. Firebase & Staff Access Setup
 
