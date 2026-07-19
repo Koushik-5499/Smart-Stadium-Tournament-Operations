@@ -70,6 +70,7 @@ export default function HomePage(_props: Props) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Fan Translation</span>
                       <select 
+                        aria-label="Select Fan Translation Language"
                         className="input" 
                         style={{ padding: '4px 8px', fontSize: 'var(--font-size-xs)', height: 'auto' }}
                         value={fanLanguage}
@@ -120,7 +121,7 @@ export default function HomePage(_props: Props) {
                         {formatOccupancy(zone.occupancyRate)}
                       </span>
                     </div>
-                    <div className="density-bar" role="progressbar" aria-valuenow={Math.round(zone.occupancyRate * 100)} aria-valuemin={0} aria-valuemax={100}>
+                    <div className="density-bar" role="progressbar" aria-valuenow={Math.round(zone.occupancyRate * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={`${zone.gate} density`}>
                       <div className={`density-bar-fill ${level}`} style={{ width: `${zone.occupancyRate * 100}%` }} />
                     </div>
                   </div>

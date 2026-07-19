@@ -86,6 +86,9 @@ export default function NavigationChatPage({ language }: Props) {
         placeholder={t('chat.placeholder', language)}
         sendLabel={t('chat.send', language)}
         ariaLabel="Navigation chat"
+        inputAriaLabel="Ask for directions to gates, seats, restrooms, food courts, or medical stations"
+        sendAriaLabel="Send navigation request"
+        messageRole="status"
       />
     </div>
   );

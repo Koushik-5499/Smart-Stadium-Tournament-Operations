@@ -11,6 +11,9 @@ interface Props {
   placeholder: string;
   sendLabel: string;
   ariaLabel: string;
+  inputAriaLabel?: string;
+  sendAriaLabel?: string;
+  messageRole?: string;
 }
 
 export default function ChatInterface({
@@ -22,11 +25,16 @@ export default function ChatInterface({
   placeholder,
   sendLabel,
   ariaLabel,
+  inputAriaLabel,
+  sendAriaLabel,
+  messageRole,
 }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   return (
@@ -36,7 +44,7 @@ export default function ChatInterface({
           <div
             key={msg.id}
             className={`chat-message ${msg.role}`}
-            role={msg.role === 'assistant' ? 'status' : undefined}
+            role={msg.role === 'assistant' ? (messageRole || 'status') : undefined}
           >
             {msg.content.split('\n').map((line, i) => (
               <span key={i}>
@@ -72,13 +80,13 @@ export default function ChatInterface({
           onKeyDown={(e) => e.key === 'Enter' && onSend()}
           placeholder={placeholder}
           disabled={isLoading}
-          aria-label={placeholder}
+          aria-label={inputAriaLabel || placeholder}
         />
         <button
           className="btn btn-primary"
           onClick={onSend}
           disabled={isLoading || !input.trim()}
-          aria-label={sendLabel}
+          aria-label={sendAriaLabel || sendLabel}
         >
           {sendLabel}
         </button>

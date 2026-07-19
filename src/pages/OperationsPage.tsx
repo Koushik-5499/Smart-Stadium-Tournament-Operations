@@ -8,21 +8,12 @@
  * incident, and transport data into an AI-generated summary.
  */
 
-import { useState, useCallback } from 'react';
 import { t } from '../shared/i18n';
-import type { SupportedLanguage, OperationsSummary } from '../shared/types';
+import type { SupportedLanguage } from '../shared/types';
 import type { User } from 'firebase/auth';
-import { generateDailySummary } from '../modules/operations-summary/summaryGenerator';
-import { generateCrowdData } from '../modules/crowd-management/CrowdSimulator';
-import { generateTransportData } from '../modules/sustainability-transport/sustainabilityMetrics';
+import { useOperationsSummary } from '../modules/operations/useOperationsSummary';
 import AuthGate from '../shared/components/AuthGate';
 import PageHeader from '../shared/components/PageHeader';
-
-// Demo incidents for summary
-const DEMO_INCIDENTS_FOR_SUMMARY = [
-  { id: '1', title: 'Medical emergency', description: 'Fan collapsed', location: 'Gate A', reportedAt: Date.now() - 300000, severity: 4 as const, status: 'in-progress' as const, reportedBy: 'Staff', aiSummary: '', aiRecommendation: '' },
-  { id: '2', title: 'Overcrowding', description: 'South concourse congestion', location: 'South', reportedAt: Date.now() - 600000, severity: 3 as const, status: 'open' as const, reportedBy: 'Staff', aiSummary: '', aiRecommendation: '' },
-];
 
 interface Props {
   language: SupportedLanguage;
@@ -30,20 +21,7 @@ interface Props {
 }
 
 export default function OperationsPage({ language, user }: Props) {
-  const [summary, setSummary] = useState<OperationsSummary | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  const handleGenerate = useCallback(async () => {
-    setIsGenerating(true);
-    try {
-      const crowdData = generateCrowdData();
-      const transportData = generateTransportData();
-      const result = await generateDailySummary(crowdData, DEMO_INCIDENTS_FOR_SUMMARY, transportData);
-      setSummary(result);
-    } finally {
-      setIsGenerating(false);
-    }
-  }, []);
+  const { summary, isGenerating, generateSummary } = useOperationsSummary();
 
   return (
     <AuthGate user={user} language={language} icon="📊">
@@ -54,7 +32,7 @@ export default function OperationsPage({ language, user }: Props) {
       />
 
       <div style={{ marginBottom: 'var(--space-xl)' }}>
-        <button className="btn btn-primary" onClick={handleGenerate} disabled={isGenerating}>
+        <button className="btn btn-primary" onClick={generateSummary} disabled={isGenerating}>
           {isGenerating ? (
             <>
               <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />

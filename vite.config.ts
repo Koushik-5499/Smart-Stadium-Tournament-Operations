@@ -11,6 +11,9 @@ export default defineConfig({
     sourcemap: true,
   },
   test: {
+    pool: 'threads',
+    environment: 'jsdom',
+    globals: true,
     coverage: {
       reporter: ['text', 'json', 'html']
     }

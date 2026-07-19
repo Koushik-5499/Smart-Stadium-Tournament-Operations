@@ -12,6 +12,7 @@ import { useAuth } from './shared/hooks/useAuth';
 import { t, getTextDirection } from './shared/i18n';
 import type { SupportedLanguage } from './shared/types';
 import { SUPPORTED_LANGUAGES } from './shared/constants';
+import { ErrorBoundary } from './shared/components/ErrorBoundary';
 
 /* ── Lazy-loaded pages (efficiency: faster initial load) ─────── */
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -175,18 +176,20 @@ export default function App() {
 
       {/* Main Content */}
       <main id="main-content" className="main-content" role="main">
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<HomePage language={language} />} />
-            <Route path="/crowd" element={<CrowdDashboardPage language={language} />} />
-            <Route path="/navigation" element={<NavigationChatPage language={language} />} />
-            <Route path="/chat" element={<ChatAssistantPage language={language} />} />
-            <Route path="/sustainability" element={<SustainabilityPage language={language} />} />
-            <Route path="/control-room" element={<ControlRoomPage language={language} user={user} />} />
-            <Route path="/operations" element={<OperationsPage language={language} user={user} />} />
-            <Route path="/login" element={<LoginPage language={language} />} />
-          </Routes>
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<HomePage language={language} />} />
+              <Route path="/crowd" element={<CrowdDashboardPage language={language} />} />
+              <Route path="/navigation" element={<NavigationChatPage language={language} />} />
+              <Route path="/chat" element={<ChatAssistantPage language={language} />} />
+              <Route path="/sustainability" element={<SustainabilityPage language={language} />} />
+              <Route path="/control-room" element={<ControlRoomPage language={language} user={user} />} />
+              <Route path="/operations" element={<OperationsPage language={language} user={user} />} />
+              <Route path="/login" element={<LoginPage language={language} />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   );

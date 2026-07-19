@@ -8,11 +8,10 @@
  * and fan-facing gate avoidance alerts. Data refreshes every 5 seconds.
  */
 
-import { useState, useCallback } from 'react';
 import { t } from '../shared/i18n';
-import type { SupportedLanguage, CrowdPrediction } from '../shared/types';
+import type { SupportedLanguage } from '../shared/types';
 import { getCongestedZones, formatOccupancy, generateRerouteSuggestion } from '../modules/crowd-management/crowdAnalysis';
-import { predictCongestion } from '../modules/crowd-management/crowdPrediction';
+import { useCrowdPrediction } from '../modules/crowd-management/useCrowdPrediction';
 import { useCrowdData } from '../shared/hooks/useCrowdData';
 import PageHeader from '../shared/components/PageHeader';
 import StatCard from '../shared/components/StatCard';
@@ -24,19 +23,7 @@ interface Props {
 
 export default function CrowdDashboardPage({ language }: Props) {
   const { activeData: crowdData } = useCrowdData();
-  const [predictions, setPredictions] = useState<CrowdPrediction[]>([]);
-  const [isLoadingPrediction, setIsLoadingPrediction] = useState(false);
-
-  const handlePredict = useCallback(async () => {
-    if (crowdData.length === 0) return;
-    setIsLoadingPrediction(true);
-    try {
-      const preds = await predictCongestion(crowdData);
-      setPredictions(preds);
-    } finally {
-      setIsLoadingPrediction(false);
-    }
-  }, [crowdData]);
+  const { predictions, isLoadingPrediction, generatePrediction } = useCrowdPrediction(crowdData);
 
   const congested = getCongestedZones(crowdData);
 
@@ -94,7 +81,7 @@ export default function CrowdDashboardPage({ language }: Props) {
         <div className="card">
           <div className="card-header">
             <h2 className="card-title">{t('crowd.prediction', language)}</h2>
-            <button className="btn btn-primary btn-sm" onClick={handlePredict} disabled={isLoadingPrediction}>
+            <button className="btn btn-primary btn-sm" onClick={generatePrediction} disabled={isLoadingPrediction}>
               {isLoadingPrediction ? '…' : '🤖 Predict'}
             </button>
           </div>

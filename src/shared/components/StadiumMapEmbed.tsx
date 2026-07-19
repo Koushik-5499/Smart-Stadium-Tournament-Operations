@@ -40,7 +40,7 @@ export default function StadiumMapEmbed({ liveData, alerts }: Props) {
   };
 
   return (
-    <div style={{ width: '100%', height: '300px', background: '#e5e7eb', position: 'relative' }}>
+    <div style={{ width: '100%', height: '300px', background: '#e5e7eb', position: 'relative' }} role="region" aria-label="Interactive stadium live map">
       <MapContainer 
         center={MAP_CENTER} 
         zoom={16} 

@@ -86,8 +86,9 @@ export default function CsvUploader({ onDataLoaded }: Props) {
           accept=".csv" 
           onChange={handleFileUpload} 
           ref={fileInputRef}
-          style={{ display: 'none' }}
+          style={{ width: '0.1px', height: '0.1px', opacity: 0, overflow: 'hidden', position: 'absolute', zIndex: -1 }}
           id="csv-upload"
+          title="Upload CSV Data"
         />
         <label htmlFor="csv-upload" className="btn btn-secondary btn-sm" style={{ cursor: 'pointer' }}>
           Upload CSV

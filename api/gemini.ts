@@ -55,6 +55,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Missing required fields: systemPrompt, userInput' });
   }
 
+  // Security: strict input length validation to prevent massive payloads
+  if (systemPrompt.length > 4000 || userInput.length > 4000) {
+    return res.status(400).json({ error: 'Payload too large. Inputs must be under 4000 characters.' });
+  }
+
   const requestBody = {
     contents: [
       {
@@ -95,8 +100,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       data?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No response generated.';
 
     return res.status(200).json({ text });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Gemini proxy error:', err);
-    return res.status(500).json({ error: err.message ?? 'Internal server error' });
+    return res.status(500).json({ error: err instanceof Error ? err.message : 'Internal server error' });
   }
 }

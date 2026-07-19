@@ -85,6 +85,9 @@ export default function ChatAssistantPage({ language: uiLanguage }: Props) {
         placeholder={t('chat.placeholder', chatLanguage)}
         sendLabel={t('chat.send', chatLanguage)}
         ariaLabel="Multilingual chat assistant"
+        inputAriaLabel="Type a message to the multilingual chat assistant"
+        sendAriaLabel="Send message to assistant"
+        messageRole="status"
       />
     </div>
   );
