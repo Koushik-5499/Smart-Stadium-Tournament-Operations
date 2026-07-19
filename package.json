@@ -29,6 +29,7 @@
     "@types/react-dom": "^19.1.6",
     "@vercel/node": "^5.8.23",
     "@vitejs/plugin-react": "^4.5.2",
+    "@vitest/coverage-istanbul": "^4.1.10",
     "@vitest/coverage-v8": "^4.1.10",
     "axe-core": "^4.12.1",
     "eslint": "^10.6.0",
