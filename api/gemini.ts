@@ -5,9 +5,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
  *
  * Accepts POST { systemPrompt, userInput } and proxies the request
  * to the Google Gemini API using the server-side GEMINI_API_KEY env var.
- * The API key never reaches the client bundle.
  *
- * Security: Server-side rate limiting (token bucket) prevents abuse.
+ * Security Measures:
+ * 1. CORS restriction to the production domain.
+ * 2. Per-IP token bucket rate limiting.
+ * 3. Lightweight shared-secret header verification.
+ * 4. Request payload size/shape validation.
  *
  * Route: POST /api/gemini
  */
@@ -15,33 +18,64 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const GEMINI_API_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
 
-/* ── Server-side rate limiter (token bucket) ────────────────────── */
-const RATE_LIMIT_MAX = 20;       // max burst
-const RATE_LIMIT_REFILL = 2;     // tokens per second
-let tokens = RATE_LIMIT_MAX;
-let lastRefill = Date.now();
+const ALLOWED_ORIGIN = 'https://smart-stadium-wc2026.vercel.app';
 
-function tryConsumeToken(): boolean {
+/* ── Per-IP Rate Limiter ────────────────────────────────────────── */
+const RATE_LIMIT_MAX = 15;       // max burst per IP
+const RATE_LIMIT_REFILL = 0.5;   // tokens per second (1 every 2 seconds)
+const rateLimiters = new Map<string, { tokens: number; lastRefill: number }>();
+
+function tryConsumeToken(ip: string): boolean {
   const now = Date.now();
-  const elapsed = (now - lastRefill) / 1000;
-  tokens = Math.min(RATE_LIMIT_MAX, tokens + elapsed * RATE_LIMIT_REFILL);
-  lastRefill = now;
-  if (tokens >= 1) {
-    tokens -= 1;
+  let limiter = rateLimiters.get(ip);
+  if (!limiter) {
+    limiter = { tokens: RATE_LIMIT_MAX, lastRefill: now };
+    rateLimiters.set(ip, limiter);
+  }
+  const elapsed = (now - limiter.lastRefill) / 1000;
+  limiter.tokens = Math.min(RATE_LIMIT_MAX, limiter.tokens + elapsed * RATE_LIMIT_REFILL);
+  limiter.lastRefill = now;
+  
+  if (limiter.tokens >= 1) {
+    limiter.tokens -= 1;
     return true;
   }
   return false;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // CORS enforcement
+  const origin = req.headers.origin;
+  if (origin && origin !== ALLOWED_ORIGIN && !origin.startsWith('http://localhost:')) {
+    return res.status(403).json({ error: 'Origin not allowed' });
+  }
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+
+  // Handle preflight OPTIONS
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-App-Secret');
+    return res.status(200).end();
+  }
+
   // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Server-side rate limiting
-  if (!tryConsumeToken()) {
+  // Per-IP Rate limiting
+  const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  if (!tryConsumeToken(ip)) {
+    res.setHeader('Retry-After', '2');
     return res.status(429).json({ error: 'Too many requests. Please try again shortly.' });
+  }
+
+  // Shared-Secret Validation
+  // VITE_APP_PROXY_SECRET is used so the frontend can read it, and backend verifies it.
+  const expectedSecret = process.env.VITE_APP_PROXY_SECRET || 'default-dev-secret';
+  const clientSecret = req.headers['x-app-secret'];
+  if (clientSecret !== expectedSecret) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid App Secret' });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -50,12 +84,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Server misconfiguration: missing API key.' });
   }
 
+  // Request Shape & Size Validation
   const { systemPrompt, userInput } = req.body ?? {};
-  if (!systemPrompt || !userInput) {
-    return res.status(400).json({ error: 'Missing required fields: systemPrompt, userInput' });
+  if (typeof systemPrompt !== 'string' || typeof userInput !== 'string') {
+    return res.status(400).json({ error: 'Malformed request: systemPrompt and userInput must be strings.' });
   }
 
-  // Security: strict input length validation to prevent massive payloads
   if (systemPrompt.length > 4000 || userInput.length > 4000) {
     return res.status(400).json({ error: 'Payload too large. Inputs must be under 4000 characters.' });
   }

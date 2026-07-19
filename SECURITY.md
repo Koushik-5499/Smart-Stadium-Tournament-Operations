@@ -20,13 +20,15 @@ match /incidents/{incidentId} {
 }
 ```
 
-## 2. API Key Protection and Environment Secrets
+## 2. API Key Protection and Vercel Proxy Hardening
 
-The Gemini API key and Firebase configuration details are never hardcoded in the source code.
+The Gemini API key is completely isolated from the client bundle. The frontend communicates with Gemini exclusively via our Vercel Serverless Function (`/api/gemini`). To protect this endpoint from abuse, we have implemented four layers of defense:
 
-- **Vercel Serverless Proxy:** The frontend never communicates with the Gemini API directly. Instead, it sends a request to our Vercel Serverless Function (`/api/gemini`).
-- **Server-Side Secrets:** The Gemini API key (`GEMINI_API_KEY`) is stored securely as a Vercel environment variable on the server. It is never prefixed with `VITE_` and never bundled into the client code.
-- **Environment Variables:** Firebase config variables are stored in `.env.local` which is excluded from version control via `.gitignore`.
+- **Domain-Restricted CORS:** The proxy explicitly restricts `Access-Control-Allow-Origin` to our production domain (`https://smart-stadium-wc2026.vercel.app`). This prevents unauthorized websites from embedding our endpoint via cross-origin requests.
+- **Per-IP Rate Limiting:** We track requests based on the client's IP address (`x-forwarded-for`), capping requests to 15 per burst with a slow token refill. This isolates abuse and prevents a single bad actor from exhausting our API quota, while ensuring legitimate users (like volunteers sending rapid alerts) are uninterrupted.
+- **Shared-Secret Header:** The frontend passes a custom header (`X-App-Secret`) baked in at build time (`VITE_APP_PROXY_SECRET`), which the server validates. 
+  - *Note on Limitations:* This is a defense-in-depth measure, not cryptographic authentication. A determined attacker could extract this secret from the client bundle. However, combined with CORS and per-IP rate limiting, it raises the bar significantly against automated or casual scripted abuse.
+- **Strict Payload Validation:** The proxy strictly enforces string types and a maximum payload size of 4000 characters before attempting to contact Gemini, preventing denial-of-wallet attacks via oversized requests.
 
 ## 3. Generative AI Safety & Prompt Injection Prevention
 
@@ -39,11 +41,8 @@ System prompts tightly constrain the AI's persona and task.
 ### Defense 2: Input Sanitization
 User inputs are sanitized before being sent to the AI to strip out HTML, script tags, and common injection patterns. (See `src/shared/validators.ts`).
 
-### Defense 3: Rate Limiting
-To prevent abuse or denial-of-wallet attacks via the Gemini API, a client-side rate limiter is implemented (See `src/shared/geminiClient.ts`). It restricts the number of API calls a single client can make within a time window.
-
-### Defense 4: Caching
-Identical queries are cached (TTL-based) to reduce API load and prevent redundant LLM processing for common questions (e.g., "Where is the nearest restroom?"). (See `src/shared/cache.ts`).
+### Defense 3: Caching
+Identical queries are cached (TTL-based) on the client side to reduce API load and prevent redundant LLM processing for common questions (e.g., "Where is the nearest restroom?"). (See `src/shared/cache.ts`).
 
 ### Defense 5: CSV Upload Validation
 User-uploaded CSV data is validated before processing to prevent injection of malformed data (NaN, negative values, zero-capacity zones). The `CsvUploader` component (See `src/shared/components/CsvUploader.tsx`) validates every numeric field and rejects rows with invalid data.

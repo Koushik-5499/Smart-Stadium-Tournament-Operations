@@ -12,6 +12,12 @@ export default defineConfig({
   },
   test: {
     pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: true,
+        isolate: false
+      }
+    },
     environment: 'jsdom',
     globals: true,
     coverage: {
