@@ -7,8 +7,8 @@
 
 import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
-import { auth } from './shared/firebaseConfig';
 import { useAuth } from './shared/hooks/useAuth';
+import { useAuthActions } from './shared/hooks/useAuthActions';
 import { t, getTextDirection } from './shared/i18n';
 import type { SupportedLanguage } from './shared/types';
 import { SUPPORTED_LANGUAGES } from './shared/constants';
@@ -37,6 +37,7 @@ function LoadingFallback() {
 export default function App() {
   const [language, setLanguage] = useState<SupportedLanguage>('en');
   const user = useAuth();
+  const { logout } = useAuthActions();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
@@ -150,7 +151,7 @@ export default function App() {
               <div style={{ marginBottom: '4px' }}>{user.email}</div>
               <button
                 className="btn btn-secondary btn-sm"
-                onClick={() => auth.signOut()}
+                onClick={logout}
                 style={{ width: '100%' }}
               >
                 {t('nav.logout', language)}

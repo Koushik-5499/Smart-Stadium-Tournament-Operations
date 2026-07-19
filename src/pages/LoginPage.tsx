@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '../shared/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { t } from '../shared/i18n';
 import type { SupportedLanguage } from '../shared/types';
+import { useAuthActions } from '../shared/hooks/useAuthActions';
 
 interface Props {
   language: SupportedLanguage;
@@ -15,6 +14,7 @@ export default function LoginPage({ language }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login, googleLogin } = useAuthActions();
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +23,7 @@ export default function LoginPage({ language }: Props) {
     setIsLoading(true);
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await login(email, password);
       navigate('/dashboard');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -36,9 +36,8 @@ export default function LoginPage({ language }: Props) {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError(null);
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      await googleLogin();
       navigate('/dashboard');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
