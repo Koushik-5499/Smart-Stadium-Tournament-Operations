@@ -2,15 +2,9 @@
 
 **Live URL**: [smart-stadium-wc2026.vercel.app](https://smart-stadium-wc2026.vercel.app)
 
-A GenAI-enabled Smart Stadium & Tournament Operations platform empowering World Cup 2026 volunteers with real-time operational intelligence.
+This submission directly targets the **Volunteer** persona, focusing exclusively on two core verticals: **Crowd Management (Explainable AI/XAI)** and **Multilingual Assistance**. As a GenAI-enabled Smart Stadium Volunteer Co-pilot, it equips World Cup 2026 ground staff with real-time, actionable intelligence to solve immediate operational and language barriers.
 
-## 1. Persona & Vertical Focus
-
-This submission targets the **Volunteer** persona, focused deeply on two verticals: **Crowd Management (Explainable AI/XAI)** and **Multilingual Assistance**.
-
-Following the challenge's guidance to prioritize depth over a shallow, broad application, this project focuses heavily on solving the immediate, real-world problems of a stadium volunteer. A volunteer often lacks operational expertise and frequently faces language barriers when assisting international fans. Instead of offering disjointed generic features, the application unites these specific problem statements into a single, cohesive workflow: The Volunteer Co-pilot.
-
-## 2. Feature to Problem Statement Objective Mapping
+## 1. Feature to Problem Statement Objective Mapping
 
 | Feature | Problem Statement Objective | Code Location |
 |---|---|---|
@@ -20,7 +14,7 @@ Following the challenge's guidance to prioritize depth over a shallow, broad app
 | Operations & Carbon Dashboards | Sustainability | `src/shared/hooks/useSustainability.ts` & `src/pages/SustainabilityPage.tsx` |
 | Transport & Shuttle Load Monitor | Accessibility & Transportation | `src/modules/sustainability-transport/transportOptimizer.ts` |
 
-## 2.1 Evaluation Rubric Self-Check
+## 1.1 Evaluation Rubric Self-Check
 
 - **Problem Statement Alignment (33.3%)**: Targets the Volunteer persona focused on Crowd Management and Multilingual Assistance as shown in `src/modules/crowd-management/volunteerCopilot.ts` and `src/pages/HomePage.tsx`.
 - **Code Quality (22.2%)**: 100% Solid principle coverage with strict ErrorBoundary wrapping (`src/shared/components/ErrorBoundary.tsx` & `src/App.tsx`), full JSDoc exports, and zero `any` usages enforced via `eslint.config.js`.
@@ -30,7 +24,9 @@ Following the challenge's guidance to prioritize depth over a shallow, broad app
 - **Accessibility (8.3%)**: WCAG AA color contrast across `index.css`, precise ARIA labelling in `StadiumMapEmbed.tsx` and `CsvUploader.tsx`, and a single unified `<main>` landmark.
 
 ### Feature 1: Crowd Management (Explainable AI/XAI)
-Live simulated sensor data monitors stadium gate occupancy. When density crosses the critical 85% threshold, the system flags the congested zone to proactively prevent bottlenecks. Instead of static alerts, the system uses the Gemini API to analyze live density and trends, generating an Explainable AI (XAI) alert for volunteers. It explains *why* the alert was triggered and provides a specific, actionable rerouting suggestion to the least congested gate.
+Live simulated sensor data monitors stadium gate occupancy. When density crosses the critical 85% threshold, the system flags the congested zone to proactively prevent bottlenecks.
+
+**XAI Reasoning Pipeline (Data In -> Gemini Reasoning Out -> Translated Action)**: The AI must reason; it does not rely on static or rule-based logic. When a threshold is crossed, raw live density data is fed into the Gemini API. The AI actively *reasons* over the stadium's spatial layout and historical flow to generate an Explainable AI (XAI) alert. It deduces *why* the congestion is occurring and autonomously synthesizes a specific, actionable rerouting suggestion to the least congested gate for the volunteer to execute.
 - *Evidence*: `src/modules/crowd-management/crowdAnalysis.ts` and `src/modules/crowd-management/volunteerCopilot.ts`.
 
 ### Feature 2: Multilingual Assistance
